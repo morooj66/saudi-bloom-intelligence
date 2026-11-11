@@ -194,3 +194,20 @@ def test_all_six_sections_have_no_exceptions_with_selection_state(built_project,
     for name in NAV:
         at.radio(key="section").set_value(name).run()
         assert not at.exception, name
+
+
+def test_overview_states_scope_country_period_terms_and_source(built_project, monkeypatch):
+    """The overview must say where, when, which five terms, which source and that values are relative interest (both languages)."""
+    import re
+    terms = ["ورد", "محل ورد", "توصيل ورد", "بوكيه ورد", "شراء ورد"]
+    clean = lambda s: re.sub("[\u2066-\u2069\u200e\u200f]", "", re.sub("<[^>]+>", "", s)).replace("\xa0", " ")
+    en = clean(text(app(built_project, monkeypatch)))
+    assert "Study scope: Saudi Arabia" in en and "about five years" in en and "Google Trends" in en
+    assert "2021" in en and "2026" in en and all(t in en for t in terms)
+    assert "not sales" in en and "relative" in en.lower()
+    monkeypatch.setenv("BLOOM_ROOT", str(built_project))
+    at = AppTest.from_file(str(APP), default_timeout=90)
+    at.query_params["lang"] = "ar"
+    ar = clean(text(at.run()))
+    assert "نطاق الدراسة: المملكة العربية السعودية" in ar and "نحو خمس سنوات" in ar and all(t in ar for t in terms)
+    assert "الاهتمام النسبي" in ar and "Google Trends" in ar

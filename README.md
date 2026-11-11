@@ -24,7 +24,7 @@ Google Trends exports are easy to misuse: every export is normalised on its own 
 - **Pre-registered forecast gate:** a calendar-feature model must beat the best naive baseline by ≥ 5% MAE *and* have a bootstrap 95% CI above zero. Result: +5.33%, CI [−0.89, 1.90] → **withheld**. Thresholds are pinned by tests and the integrity check.
 - **Bilingual, accessible UI:** full Arabic (RTL) and English (LTR), a language switch that keeps your section/term/region, text alternatives for every chart, and map/chart states (numeric, censored, no data) also stated in text, tooltips and legends rather than by colour alone.
 - **Geospatial:** 13-region choropleth from geoBoundaries (ODbL), hash-verified, ring-order fix at render time, click-to-select.
-- **Quality gates:** 234 automated tests plus a real-browser check (Chrome, 1440/768/390 px, both languages).
+- **Quality gates:** 252 automated tests plus a real-browser check (Chrome, 1440/768/390 px, both languages).
 
 ## Architecture
 ```mermaid
@@ -54,8 +54,8 @@ Python 3.13 (exact versions pinned in `requirements.txt` = `requirements.lock`) 
 ## Validation and testing
 | Check | Result |
 |---|---|
-| Automated tests, with data | **234 passed** (`pytest`) |
-| Automated tests, fresh clone **without** data | 68 passed, 166 skipped with an explicit reason, 0 failed |
+| Automated tests, with data | **252 passed** (`pytest`) |
+| Automated tests, fresh clone **without** data | 82 passed, 170 skipped with an explicit reason, 0 failed |
 | Runtime integrity | 19 / 19 (`python -m bloom.integrity`) |
 | Pipeline validation | 116 checks, 0 errors, 6 documented warnings |
 | Browser checks (`scripts/browser_check.py`) | all pass at 1440 / 768 / 390 px in English and Arabic: layout, direction, language switch, map clicks, tooltips |
@@ -99,7 +99,8 @@ More annual cycles and repeated exports (then re-run the same gate unchanged) ·
 ```
 src/bloom/    ingest transform validate calendar_features analysis forecast phase_a overview integrity geo schema report
 app/          streamlit_app, components, i18n (ar/en), theme, bidi, assets/
-tests/        234 tests (data-independent and data-dependent)       scripts/   browser_check.py, export_check.py, audit_licenses.py
+tests/        252 tests (data-independent and data-dependent)       scripts/   browser_check.py, export_check.py, make_data_bundle.py, audit_licenses.py
 data/geo/     boundary data + attribution (the only data shipped)    docs/images/  screenshots used in this README
 ```
+Hosted-deployment design (private data bundle, hash-verified at start-up; implemented and tested locally, not deployed): [PRIVATE_DATA_ARCHITECTURE.md](PRIVATE_DATA_ARCHITECTURE.md).
 Documents: [CASE_STUDY.md](CASE_STUDY.md) · [DATA_METHODOLOGY.md](DATA_METHODOLOGY.md) (what is cleaned vs validated) · [DATA_DICTIONARY.md](DATA_DICTIONARY.md) · [DATA_SOURCES.md](DATA_SOURCES.md) · [DATA_VALIDATION_REPORT.md](DATA_VALIDATION_REPORT.md) · [DATA_USE_ASSESSMENT.md](DATA_USE_ASSESSMENT.md) · [TEST_RESULTS.md](TEST_RESULTS.md) · [REGIONAL_RANKING_VERIFICATION.md](REGIONAL_RANKING_VERIFICATION.md) · [CITY_LEVEL_FEASIBILITY.md](CITY_LEVEL_FEASIBILITY.md) · [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md)

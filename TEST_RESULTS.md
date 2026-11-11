@@ -81,3 +81,9 @@ Layout issues: **0 of 18** (3 widths × 6 sections). Streamlit log: 0 warnings, 
 - Browser (`scripts/browser_check.py`): ALL PASS in English and Arabic at 1440/768/390 px, language switch, map clicks, selectors.
 - Export controls (`scripts/export_check.py`): 18 charts and 22 tables hovered across all sections in both languages: no "Download as CSV", no table copy, no "Download plot as a PNG", no download links. Positive control on the previous commit: the detector finds "Download as CSV" and "Download plot as a PNG" on 14 pages.
 - Not removed by design: the values drawn in charts remain in the page data (see `PRIVATE_DATA_ARCHITECTURE.md`).
+
+## Final release workflow (2026-11-11)
+- Overview now states the study scope (Saudi Arabia, 10 Nov 2021 – 10 Nov 2026 taken from the exports' query window, five Arabic terms, Google Trends); one new test checks it in both languages.
+- Private-data start-up (`src/bloom/bootstrap.py`, `scripts/make_data_bundle.py`): 17 new tests, including bundle → empty root → dashboard passing the full integrity gate, and a tampered bundle failing closed.
+- Project venv: **252 passed**; integrity VERIFIED. Data-less clone: 82 passed / 170 skipped / 0 failed.
+- A live instance started from an empty root that loaded a real-data bundle from a local token-protected server passed `browser_check.py` (EN/AR × 1440/768/390, language switch, map clicks) and `export_check.py` (no export controls); the token never appeared in the server log.

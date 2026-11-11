@@ -33,3 +33,8 @@ data/manifest.csv
 
 # Pilot city-level reports embed a table of Google Trends city values (redistribution not cleared); the finding is summarised in CASE_STUDY.md
 CITY_PILOT_*.md
+
+# Private data bundles (contain Google Trends data): never commit
+*.tar.gz
+.bundle_*/
+bloom_data_bundle*

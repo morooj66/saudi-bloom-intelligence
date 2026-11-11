@@ -1,6 +1,6 @@
-# Private-data deployment architecture (design only; nothing implemented, nothing uploaded)
+# Private-data deployment architecture (implemented and tested locally; nothing uploaded, nothing deployed)
 
-Status: **prepared, not deployed.** The Google Trends data stay out of the public repository. Whether a public app may serve them at all is still unresolved (`DATA_USE_ASSESSMENT.md`); this document only describes how to do it without publishing the data files.
+Status: **implemented in `src/bloom/bootstrap.py` and `scripts/make_data_bundle.py`, tested against a local token-protected server only; not deployed.** The Google Trends data stay out of the public repository. Whether a public app may serve them at all is still unresolved (`DATA_USE_ASSESSMENT.md`); this document only describes how to do it without publishing the data files.
 
 ## What the app needs at run time
 The fail-closed integrity gate re-checks hashes, so the server needs the whole verified tree, not just the charts:
@@ -17,7 +17,7 @@ If any file is missing or altered the dashboard shows no analytics. This is the 
 1. **Build the bundle locally** (as today): `bloom.pipeline`, `bloom.phase_a`, `bloom.integrity` → INTEGRITY VERIFIED. Pack `data/raw`, `data/processed` and the manifests into one archive; record its SHA-256 on your machine.
 2. **Store the archive privately**, outside the public repository: a *private* GitHub repository or release asset, or a private object store (an S3-compatible bucket with a read-only credential). Never in `saudi-bloom-intelligence`.
 3. **Give the host a read-only credential and the expected SHA-256 as secrets** (Streamlit Community Cloud: app *Settings → Secrets*; a self-hosted container: environment variables or a secret manager). The credential is created by you in your own account; it must not be pasted into chat, code, commits or logs. `.streamlit/secrets.toml` is already git-ignored.
-4. **At start-up** a small bootstrap (not written yet) downloads the archive to a temporary directory, checks its SHA-256 against the secret, unpacks it and points the app at it through the existing `BLOOM_ROOT` setting. The existing integrity gate then verifies every raw and processed file against the manifest exactly as it does today. A wrong or tampered archive therefore fails closed.
+4. **At start-up** the bootstrap (`bloom.bootstrap.ensure_data`, called once at the top of the app) downloads the archive to a temporary directory, checks its SHA-256 against the secret, unpacks it and points the app at it through the existing `BLOOM_ROOT` setting. The existing integrity gate then verifies every raw and processed file against the manifest exactly as it does today. A wrong or tampered archive therefore fails closed.
 5. **Nothing about the analysis changes:** pipeline, thresholds, forecast gate and caveats are untouched; the bootstrap only supplies files.
 
 Why this over the alternatives:
@@ -40,3 +40,11 @@ Why this over the alternatives:
 - Do not log file contents; the bootstrap should log only file names and the checksum result.
 - Keep `server.enableStaticServing = false` (current default) so nothing under the app folder is served by URL.
 - Add the attribution "Data source: Google Trends (https://www.google.com/trends)" wherever values appear (the app footer already credits Google Trends).
+
+## How it works (as implemented)
+- **Settings** (environment variables or Streamlit secrets, same names): `BLOOM_DATA_BUNDLE_URL` (https; plain http only for localhost), `BLOOM_DATA_BUNDLE_SHA256` (required), `BLOOM_DATA_BUNDLE_TOKEN` (optional bearer token). With none set, or when data already exist, the bootstrap does nothing, so local use is unchanged.
+- **Checks, in order:** 64 MB size cap; SHA-256 of the whole archive; every member must be a regular file under `data/raw/`, `data/processed/` or `data/manifest.json|csv` (absolute paths, `..`, links, devices and anything else are rejected before extraction); extraction to a temporary folder; completeness; atomic move into place; then the existing integrity gate verifies every file against the manifest.
+- **Errors** name the host and the HTTP code or error class only; the URL and token never appear in messages. After a failure there is a 60 s cool-down so a broken bundle is not re-downloaded on every click.
+- **Packing:** `PYTHONPATH=src python scripts/make_data_bundle.py --out <path outside the repository>` (refuses unless integrity passes, refuses an output inside the project, prints the SHA-256, deterministic archive).
+- **Tests** (`tests/test_bootstrap.py`, 17): no-op cases; fetch with token; secrets path; wrong hash; missing hash; wrong token (no leak); http only for localhost; six unsafe-archive cases; incomplete bundle; cool-down; end-to-end bundle → empty root → dashboard passes the full integrity gate; tampered bundle with a recomputed hash still fails closed; the packing script refuses an output inside the project.
+- **Local live test:** a bundle of the real data was served from a local token-protected server to an empty root; the dashboard loaded it, and the real-browser checks (English and Arabic at 1440/768/390 px, language switch, map clicks) and the export-control check were run against that instance.

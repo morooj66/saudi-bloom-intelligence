@@ -26,6 +26,7 @@ from bloom import config as C
 from bloom.forecast import GATE_MIN_IMPROVEMENT, HORIZONS, MIN_TRAIN
 from bloom.geo import ATTRIBUTION_TEXT, load_geojson, rewind_for_plotly, verify_geo
 from bloom.integrity import RERUN_COMMANDS, verify
+from bloom.bootstrap import KEYS as BOOT_KEYS, BootstrapError, ensure_data
 from bloom.overview import (MIX_TERM_ORDER, eid_weeks, history_coverage, map_text_alternative, month_extremes, ranking_explainer, region_comparison, regions_covered, select_from_map,
                             series_text_alternative, spread_of_available, strongest_seasonal, term_mix_cell_counts, term_mix_order, term_mix_regions, term_mix_table,
                             term_mix_text_alternative, toggle_from_map, top_region, trend_vs_prior_year, yoy_frame)
@@ -69,9 +70,23 @@ st.markdown('<div class="tagline">' + L("Relative search-interest analytics for 
                                          "تحليلات الاهتمام النسبي بالبحث عن الورد في المملكة العربية السعودية: الموسمية على المستوى الوطني، ومقارنة بين 13 منطقة، "
                                          "وتوقّع لا يُنشر إلا بعد اجتياز التحقق.") + '</div>', unsafe_allow_html=True)
 
+# ------------------------------------------------------------------ private-data start-up (hosted deployments only; no-op when data exist or nothing is configured)
+_boot_error = None
+try:
+    try:
+        _secrets = {k: st.secrets[k] for k in BOOT_KEYS if k in st.secrets}
+    except Exception:
+        _secrets = {}
+    ensure_data(ROOT, secrets=_secrets)
+except BootstrapError as _e:
+    _boot_error = str(_e)
+
 # ------------------------------------------------------------------ fail-closed integrity gate
 report = verify(ROOT)
 if not report.ok:
+    if _boot_error:
+        T.callout(L("<b>The private data bundle could not be loaded.</b> " + _boot_error + " Nothing is shown until the data pass every integrity check.",
+                    "<b>تعذّر تحميل حزمة البيانات الخاصة.</b> لا يُعرض شيء إلا بعد أن تجتاز البيانات كل فحوص السلامة."), "rose")
     _no_data = not (PATHS.processed / "validation_results.json").exists() and not PATHS.manifest_json.exists() and not (PATHS.incoming.exists() and any(PATHS.incoming.glob("*.csv")))
     if _no_data:
         T.callout(L("<b>No Google Trends data found.</b> This project does not ship the Google Trends exports (their redistribution terms are not cleared), so you supply your own: "
@@ -344,6 +359,12 @@ if section == "overview":
             L(f"National forecast: <b>{fc_txt}</b>.", f"التوقع الوطني: <b>{fc_txt}</b>."),
             L("Independently normalised exports are never combined.", "لا تُدمج أبدًا التصديرات المُطبَّعة بشكل مستقل.")]), unsafe_allow_html=True)
     T.callout(K.disclaimer())
+    _win = [e for e in manifest if e.get("window_start") and e.get("window_end")]  # query window stated in the regional exports
+    if _win:
+        _terms = ["ورد", "محل ورد", "توصيل ورد", "بوكيه ورد", "شراء ورد"]
+        _w0, _w1 = I.fdate(min(e["window_start"] for e in _win)), I.fdate(max(e["window_end"] for e in _win))
+        T.caption(L(f"Study scope: Saudi Arabia · Google Trends weekly search interest, {_w0} – {_w1} (about five years) · five Arabic search terms: {', '.join(K.label(x) for x in _terms)}.",
+                    f"نطاق الدراسة: المملكة العربية السعودية · اهتمام البحث الأسبوعي في Google Trends، من {_w0} إلى {_w1} (نحو خمس سنوات) · خمسة مصطلحات بحث: {'، '.join(_terms)}."))
     T.caption(L("Regional level only: city-level data (Riyadh, Jeddah, Dammam) is not in the data and not implemented.", "المستوى الإقليمي فقط: بيانات المدن (الرياض، جدة، الدمام) غير موجودة في البيانات وغير منفّذة."))
 
 # =================================================================================================== National trend
