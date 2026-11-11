@@ -1,0 +1,9 @@
+pandas>=3.0
+pyarrow>=20
+hijridate>=2.3
+statsmodels>=0.14
+scipy>=1.11
+plotly>=5.20
+streamlit>=1.35
+pytest>=8
+pillow>=10          # favicon (app/assets/brandmark.png); also a streamlit dependency

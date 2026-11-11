@@ -1,0 +1,39 @@
+{
+  "dataset": "geoBoundaries gbOpen — Saudi Arabia (SAU) ADM1 (13 administrative regions)",
+  "provider": "geoBoundaries (William & Mary geoLab), https://www.geoboundaries.org",
+  "api_metadata_url": "https://www.geoboundaries.org/api/current/gbOpen/SAU/ADM1/",
+  "boundaryID": "SAU-ADM1-25081817",
+  "boundaryYearRepresented": "2017",
+  "sourceDataUpdateDate": "Thu Jan 19 07:31:04 2023",
+  "buildDate": "Dec 12, 2023",
+  "upstream_source": "OpenStreetMap, Wambacher",
+  "upstream_source_url": "wambachers-osm.website/boundaries/",
+  "license": "Open Data Commons Open Database License 1.0",
+  "license_source": "www.openstreetmap.org/copyright",
+  "license_note": "The geoBoundaries site states CC BY 4.0 in general, but THIS layer's own metadata says ODbL 1.0 (OpenStreetMap-derived). ODbL is the governing licence for this file.",
+  "files": {
+    "full_resolution": {
+      "url": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/SAU/ADM1/geoBoundaries-SAU-ADM1.geojson",
+      "sha256": "75abcfd5a61790e5e505974f04cbd1d869e58d81b6faba039b000987e659e840",
+      "stored_in_repo": false
+    },
+    "simplified": {
+      "url": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/SAU/ADM1/geoBoundaries-SAU-ADM1_simplified.geojson",
+      "sha256": "cf50a59ddcda0fc4539c12799c320b9936fd75f47c1b5562ef548436d9169e13",
+      "stored_in_repo": true,
+      "repo_path": "data/geo/saudi_adm1_geoboundaries_simplified.geojson",
+      "modification": "None by this project. This is geoBoundaries' own pre-simplified release; the file is stored byte-for-byte as downloaded."
+    }
+  },
+  "retrieved_date": "2026-11-10",
+  "retrieved_by": "HTTP download of the release URLs above",
+  "validation": {
+    "method": "bloom.geo.validate_geojson plus an offline cross-check of full vs simplified geometry",
+    "feature_count": 13,
+    "shapeISO_codes": "SA-01..SA-12 and SA-14 exactly (no SA-13 exists in ISO 3166-2:SA)",
+    "city_in_region_check": "13 well-known city coordinates (reviewer-supplied, independent of the dataset) each fall in exactly the expected region",
+    "full_vs_simplified_area_difference_max_pct": 0.02,
+    "computed_total_area_km2": 1929379,
+    "area_caveat": "Computed total ~1.93M km2 is ~10% below the commonly cited ~2.15M km2 for the Kingdom, consistent with the provider's own statistics (13 x meanAreaSqKM = 1.92M). Boundaries are one OpenStreetMap-based depiction (year represented 2017), not an authoritative survey; they must not be used for legal, cadastral or border-delimitation purposes."
+  }
+}

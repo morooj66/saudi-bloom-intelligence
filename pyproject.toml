@@ -1,0 +1,9 @@
+[project]
+name = "saudi-bloom-intelligence"
+version = "0.2.0"
+description = "Reproducible ETL and validation for Saudi Google Trends flower search interest"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

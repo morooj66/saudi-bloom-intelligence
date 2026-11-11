@@ -1,0 +1,35 @@
+# ---- Saudi Bloom Intelligence: nothing below is meant to be published by default ----
+# Local environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.streamlit/secrets.toml
+.DS_Store
+*.log
+nohup.out
+
+# Local review artifacts, screenshots, temporary files
+review_assets/
+reports/pytest_output*.txt
+tmp/
+*.tmp
+
+# City-level pilot (unlicensed Google Trends exports, one reconstructed file): never publish
+pilot_city_staging/
+
+# Third-party open-data file inspected in Phase 1 but not used by the product; its licence was never verified
+evidence/
+
+# Google Trends data: redistribution terms are NOT yet cleared (see DATA_USE_ASSESSMENT.md).
+# Excluded by default so that a careless `git add .` cannot publish them. After you have decided, delete these lines
+# (publish the data) or keep them (readers supply their own exports; the pipeline and the fail-closed dashboard explain what is missing).
+incoming_data/
+data/raw/
+data/processed/
+data/manifest.json
+data/manifest.csv
+
+# Pilot city-level reports embed a table of Google Trends city values (redistribution not cleared); the finding is summarised in CASE_STUDY.md
+CITY_PILOT_*.md
