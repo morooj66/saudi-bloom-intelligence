@@ -48,3 +48,12 @@ Why this over the alternatives:
 - **Packing:** `PYTHONPATH=src python scripts/make_data_bundle.py --out <path outside the repository>` (refuses unless integrity passes, refuses an output inside the project, prints the SHA-256, deterministic archive).
 - **Tests** (`tests/test_bootstrap.py`, 17): no-op cases; fetch with token; secrets path; wrong hash; missing hash; wrong token (no leak); http only for localhost; six unsafe-archive cases; incomplete bundle; cool-down; end-to-end bundle → empty root → dashboard passes the full integrity gate; tampered bundle with a recomputed hash still fails closed; the packing script refuses an output inside the project.
 - **Local live test:** a bundle of the real data was served from a local token-protected server to an empty root; the dashboard loaded it, and the real-browser checks (English and Arabic at 1440/768/390 px, language switch, map clicks) and the export-control check were run against that instance.
+
+## Private GitHub repository as the store (as configured)
+The verified bundle is committed as `bloom_data_bundle.tar.gz` in the **private** repository `morooj66/saudi-bloom-private-data` (never in the public repository). The bootstrap reads it through the GitHub contents API with a read-only token:
+```
+BLOOM_DATA_BUNDLE_URL    = "https://api.github.com/repos/morooj66/saudi-bloom-private-data/contents/bloom_data_bundle.tar.gz?ref=main"
+BLOOM_DATA_BUNDLE_SHA256 = "a777a70c1e0642b9cc4f9482bd9e1710092ba2f00346bce4a4512891727f9307"
+BLOOM_DATA_BUNDLE_TOKEN  = "<fine-grained token, Contents: read-only, only that repository>"   # created by the owner; never committed or logged
+```
+For this URL the request asks for the raw file (`Accept: application/vnd.github.raw+json`); a release-asset URL still uses `application/octet-stream`. The token is sent only to the first host and dropped on any redirect to another host. A bundle committed to Git stays in that repository's history; to retire it, delete the private repository.

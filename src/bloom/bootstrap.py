@@ -2,7 +2,8 @@
 
 Nothing here runs unless the data are missing AND a bundle is configured (environment variables or Streamlit secrets):
 
-    BLOOM_DATA_BUNDLE_URL      https URL of a .tar.gz bundle (http only for localhost, used by the tests)
+    BLOOM_DATA_BUNDLE_URL      https URL of a .tar.gz bundle (http only for localhost, used by the tests). For a file in a private GitHub repository:
+                               https://api.github.com/repos/<owner>/<repo>/contents/<file>?ref=main   (release asset: .../releases/assets/<id>)
     BLOOM_DATA_BUNDLE_SHA256   expected SHA-256 of that archive (hex)             <- the bundle cannot be swapped silently
     BLOOM_DATA_BUNDLE_TOKEN    optional read-only bearer token for a private store  <- never logged, never put in an error message
 
@@ -65,6 +66,15 @@ def _check_url(url: str) -> urllib.parse.ParseResult:
     raise BootstrapError("The data bundle URL must use https (plain http is allowed only for localhost).")
 
 
+def accept_for(url: str) -> str:
+    """GitHub serves a private repository FILE as raw bytes through the contents API (Accept: raw) and a release ASSET as bytes
+    only with Accept: octet-stream. Everything else gets octet-stream."""
+    u = urllib.parse.urlparse(url)
+    if u.hostname == "api.github.com" and "/contents/" in u.path:
+        return "application/vnd.github.raw+json"
+    return "application/octet-stream"
+
+
 class _SafeRedirect(urllib.request.HTTPRedirectHandler):
     """Private stores (e.g. GitHub release assets) redirect to a signed URL on another host. Follow only https/localhost targets and
     never forward the bearer token to a different host."""
@@ -79,7 +89,7 @@ class _SafeRedirect(urllib.request.HTTPRedirectHandler):
 
 def download(url: str, token: str | None = None, timeout: float = 30.0) -> bytes:
     u = _check_url(url)
-    req = urllib.request.Request(url, headers={"Accept": "application/octet-stream", "User-Agent": "saudi-bloom-intelligence-bootstrap"})
+    req = urllib.request.Request(url, headers={"Accept": accept_for(url), "User-Agent": "saudi-bloom-intelligence-bootstrap"})
     if token:
         req.add_header("Authorization", f"Bearer {token}")
     try:

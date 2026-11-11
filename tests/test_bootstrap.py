@@ -240,3 +240,28 @@ def test_redirect_to_plain_http_on_a_public_host_is_refused():
     h = B._SafeRedirect()
     with pytest.raises(B.BootstrapError, match="https"):
         h.redirect_request(__import__("urllib.request").request.Request("https://api.example.com/a"), None, 302, "Found", {}, "http://evil.example.com/b")
+
+
+def test_accept_header_depends_on_the_kind_of_github_url():
+    assert B.accept_for("https://api.github.com/repos/o/r/contents/bloom_data_bundle.tar.gz?ref=main") == "application/vnd.github.raw+json"
+    assert B.accept_for("https://api.github.com/repos/o/r/releases/assets/123") == "application/octet-stream"
+    assert B.accept_for("https://example.com/b.tar.gz") == "application/octet-stream"
+    assert B.accept_for("http://127.0.0.1:1/contents/x") == "application/octet-stream"  # only the real GitHub API host gets the raw media type
+
+
+def test_the_accept_header_is_actually_sent(tmp_path):
+    seen = {}
+    blob = bundle(GOOD)
+
+    class H(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            seen["accept"] = self.headers.get("Accept"); self.send_response(200); self.send_header("Content-Length", str(len(blob))); self.end_headers(); self.wfile.write(blob)
+
+        def log_message(self, *a):
+            pass
+    srv = http.server.HTTPServer(("127.0.0.1", 0), H); threading.Thread(target=srv.serve_forever, daemon=True).start()
+    try:
+        assert B.download(f"http://127.0.0.1:{srv.server_port}/x") == blob
+    finally:
+        srv.shutdown(); srv.server_close()
+    assert seen["accept"] == "application/octet-stream"
