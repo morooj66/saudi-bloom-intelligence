@@ -214,3 +214,29 @@ def test_tampered_bundle_fails_closed_in_the_dashboard(built_project, tmp_path, 
         s.close()
     page = " ".join(m.value for m in at.markdown)
     assert "analytics are hidden" in page and "integrity checks passed before anything was displayed" not in page
+
+
+def test_token_is_not_forwarded_to_a_different_host_after_a_redirect(tmp_path):
+    """Private stores redirect to a signed URL on another host: the bearer token must stay with the first host."""
+    blob = bundle(GOOD); target = Server(blob, token=None)
+    port = target.httpd.server_port; seen = {}
+
+    class R(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            seen["first"] = self.headers.get("Authorization")
+            self.send_response(302); self.send_header("Location", f"http://localhost:{port}/signed"); self.end_headers()
+
+        def log_message(self, *a):
+            pass
+    first = http.server.HTTPServer(("127.0.0.1", 0), R); threading.Thread(target=first.serve_forever, daemon=True).start()
+    try:
+        got = B.download(f"http://127.0.0.1:{first.server_port}/asset", token=TOKEN)
+    finally:
+        first.shutdown(); first.server_close(); target.close()
+    assert got == blob and seen["first"] == f"Bearer {TOKEN}" and target.seen_auth == [None]
+
+
+def test_redirect_to_plain_http_on_a_public_host_is_refused():
+    h = B._SafeRedirect()
+    with pytest.raises(B.BootstrapError, match="https"):
+        h.redirect_request(__import__("urllib.request").request.Request("https://api.example.com/a"), None, 302, "Found", {}, "http://evil.example.com/b")

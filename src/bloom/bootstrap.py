@@ -65,13 +65,25 @@ def _check_url(url: str) -> urllib.parse.ParseResult:
     raise BootstrapError("The data bundle URL must use https (plain http is allowed only for localhost).")
 
 
+class _SafeRedirect(urllib.request.HTTPRedirectHandler):
+    """Private stores (e.g. GitHub release assets) redirect to a signed URL on another host. Follow only https/localhost targets and
+    never forward the bearer token to a different host."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        target = _check_url(newurl)
+        new = super().redirect_request(req, fp, code, msg, headers, newurl)
+        if new is not None and target.hostname != urllib.parse.urlparse(req.full_url).hostname:
+            new.remove_header("Authorization")
+        return new
+
+
 def download(url: str, token: str | None = None, timeout: float = 30.0) -> bytes:
     u = _check_url(url)
     req = urllib.request.Request(url, headers={"Accept": "application/octet-stream", "User-Agent": "saudi-bloom-intelligence-bootstrap"})
     if token:
         req.add_header("Authorization", f"Bearer {token}")
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as r:  # noqa: S310 - scheme restricted above
+        with urllib.request.build_opener(_SafeRedirect).open(req, timeout=timeout) as r:  # noqa: S310 - scheme restricted above
             buf = io.BytesIO()
             while True:
                 chunk = r.read(1 << 20)
