@@ -74,3 +74,10 @@ Layout issues: **0 of 18** (3 widths × 6 sections). Streamlit log: 0 warnings, 
 - Project venv: **231 passed**; `bloom.integrity` VERIFIED; browser check ALL PASS (EN/AR × 1440/768/390 + language switch).
 - Cloud-like clean install (fresh Python 3.13 venv from `requirements.txt` only, files that would be committed): data-less 65 passed / 166 skipped / 0 failed; with the nine exports supplied, pipeline 116 checks 0 errors, integrity VERIFIED, **231 passed**, 20 output files byte-identical to the original build.
 - Repository scan of 91 would-be-committed files: 0 data/pilot/evidence/venv paths, 0 personal paths, 0 secret patterns, 0 e-mail addresses.
+
+## Display-only preparation (2026-11-11)
+- `.streamlit/config.toml`: `client.disableDataExport = true`; every `st.plotly_chart` hides the image-download button (`modeBarButtonsToRemove=["toImage"]`); `requirements.txt` pinned to the 46 versions of `requirements.lock`.
+- Project venv: **234 passed** (3 new tests in `tests/test_display_only.py`); `bloom.integrity` VERIFIED. Fresh Python 3.13.15 venv from `requirements.txt` only: installed set equals the 46 pins exactly; with the nine exports supplied the pipeline (116 checks, 0 errors), integrity and **231** tests pass and all 20 outputs are byte-identical to the original build; data-less clone: 68 passed / 166 skipped / 0 failed.
+- Browser (`scripts/browser_check.py`): ALL PASS in English and Arabic at 1440/768/390 px, language switch, map clicks, selectors.
+- Export controls (`scripts/export_check.py`): 18 charts and 22 tables hovered across all sections in both languages: no "Download as CSV", no table copy, no "Download plot as a PNG", no download links. Positive control on the previous commit: the detector finds "Download as CSV" and "Download plot as a PNG" on 14 pages.
+- Not removed by design: the values drawn in charts remain in the page data (see `PRIVATE_DATA_ARCHITECTURE.md`).

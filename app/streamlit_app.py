@@ -31,6 +31,8 @@ from bloom.overview import (MIX_TERM_ORDER, eid_weeks, history_coverage, map_tex
                             term_mix_text_alternative, toggle_from_map, top_region, trend_vs_prior_year, yoy_frame)
 
 L = I.L
+# display-only release: no chart-image download button (zoom, pan, tooltips and region selection are unchanged)
+PLOT_CFG = {"modeBarButtonsToRemove": ["toImage"]}
 ROOT = Path(os.environ.get("BLOOM_ROOT", C.ROOT))  # BLOOM_ROOT only used by tests
 PATHS = C.paths(ROOT)
 TARGET = "محل ورد"  # designated forecast/headline term (flower shop), chosen before any backtest
@@ -217,7 +219,7 @@ if section == "overview":
         mta = map_text_alternative(dterm, K.label(ov_term), LANG)
         if geo_ok:
             st.plotly_chart(K.region_map(dterm, load_map_geojson(str(ROOT)), ov_term, L("index (100 = peak region)", "المؤشر (100 = أعلى منطقة)"), selected=[st.session_state["ov_region"]], height=560),
-                            width="stretch", key=f"ovmap_{st.session_state['ov_nonce']}", on_select=on_ov_select, selection_mode=("points",))
+                            width="stretch", config=PLOT_CFG, key=f"ovmap_{st.session_state['ov_nonce']}", on_select=on_ov_select, selection_mode=("points",))
             st.markdown(T.map_legend_html(), unsafe_allow_html=True)
             alt(mta)
             T.caption(L(ATTRIBUTION_TEXT, "الحدود: geoBoundaries (SAU ADM1)، © مساهمو OpenStreetMap، رخصة ODbL 1.0 · إصدار مبسّط دون تعديل"))
@@ -309,7 +311,7 @@ if section == "overview":
     with l2:
         st.markdown("##### " + L(f"National weekly search interest · {K.label(TARGET)}", f"الاهتمام الوطني الأسبوعي بالبحث · {K.label(TARGET)}"))
         dd = full_b[full_b["term"] == TARGET]
-        st.plotly_chart(K.series_chart(dd, events=events[events["event"].isin(["eid_al_fitr", "eid_al_adha"])], height=380), width="stretch")
+        st.plotly_chart(K.series_chart(dd, events=events[events["event"].isin(["eid_al_fitr", "eid_al_adha"])], height=380), width="stretch", config=PLOT_CFG)
         alt(series_text_alternative(dd, K.label(TARGET), lang=LANG))
     with r2:
         top3 = es_all[es_all["term"] == TARGET].sort_values("median_lift", ascending=False).head(3)
@@ -359,7 +361,7 @@ elif section == "trend":
     ev_pick = c2.multiselect(L("Event annotations", "علامات المناسبات"), ev_opts, default=["eid_al_fitr", "eid_al_adha"], format_func=I.event_label, key="trend_events", placeholder=L("Choose events", "اختر المناسبات"))
     if pick:
         d = long[long["term"].isin(pick)]
-        st.plotly_chart(K.series_chart(d, events=events[events["event"].isin(ev_pick)], height=440), width="stretch")
+        st.plotly_chart(K.series_chart(d, events=events[events["event"].isin(ev_pick)], height=440), width="stretch", config=PLOT_CFG)
         K.scale_caption(d)
         for tm in pick[:4]:
             alt(series_text_alternative(d[d["term"] == tm], K.label(tm), lang=LANG))
@@ -408,7 +410,7 @@ elif section == "seasonality":
         L("Whether searches reflect purchases is unknown: Google Trends contains no sales information.", "لا يُعرف إن كانت عمليات البحث تعكس مشتريات: لا يتضمن Google Trends أي معلومات عن المبيعات.")]), unsafe_allow_html=True)
     st.markdown("##### " + L("Year-over-year overlay", "مقارنة السنوات فوق بعضها"))
     yo = yoy_frame(analytic, term)
-    st.plotly_chart(K.yoy_chart(yo, ecal), width="stretch")
+    st.plotly_chart(K.yoy_chart(yo, ecal), width="stretch", config=PLOT_CFG)
     alt(L(f"{K.label(term)}, mean weekly index by calendar year: ", f"{K.label(term)}، متوسط المؤشر الأسبوعي حسب السنة الميلادية: ")
         + ("؛ " if RTL else "; ").join(f"{int(y)} {v:.0f}" for y, v in yo.groupby("year")["value"].mean().items()) + L(" (2021 and 2026 are partial years).", " (2021 و2026 سنتان جزئيتان)."))
     T.caption(L("Each line is a calendar year on the same scale; dotted lines are partial years. Markers: the week containing Eid al-Fitr (◆) and Eid al-Adha (■). "
@@ -416,7 +418,7 @@ elif section == "seasonality":
                 "كل خط سنة ميلادية على المقياس نفسه؛ الخطوط النقطية سنوات جزئية. العلامات: الأسبوع الذي يحوي عيد الفطر (◆) وعيد الأضحى (■). "
                 "تواريخ العلامات وفق تقويم أم القرى، ويبيّن نص التمرير هل تم التحقق من كل منها من إعلان سعودي."))
     st.markdown("##### " + L("Average by month", "المتوسط حسب الشهر"))
-    st.plotly_chart(K.month_chart(mp), width="stretch")
+    st.plotly_chart(K.month_chart(mp), width="stretch", config=PLOT_CFG)
     alt(L(f"Average by month for {K.label(term)}: highest {mname(mx['top'][0][0])} ({mx['top'][0][1]:.2f}× the overall mean) and {mname(mx['top'][1][0])} ({mx['top'][1][1]:.2f}×); lowest {mname(mx['bottom'][-1][0])} ({mx['bottom'][-1][1]:.2f}×).",
           f"المتوسط الشهري لـ {K.label(term)}: الأعلى {mname(mx['top'][0][0])} ({mx['top'][0][1]:.2f}× من المتوسط العام) و{mname(mx['top'][1][0])} ({mx['top'][1][1]:.2f}×)؛ الأدنى {mname(mx['bottom'][-1][0])} ({mx['bottom'][-1][1]:.2f}×)."))
     T.caption(L(f"Data scale: {K.friendly_scale(mp['scale_id'].iloc[0])}. Ratios are within-series (unit-free), so the export's normalisation does not affect them.",
@@ -424,7 +426,7 @@ elif section == "seasonality":
     st.markdown("##### " + L("Event-week lift", "ارتفاع أسابيع المناسبات"))
     T.caption(L("Event-week value ÷ median of surrounding baseline weeks (±2–4 weeks, other events excluded). Five occurrences per event: indicative, not significance-tested.",
                 "قيمة أسبوع المناسبة ÷ وسيط الأسابيع المحيطة (±2–4 أسابيع دون المناسبات الأخرى). خمس مرات لكل مناسبة: إرشادي وغير مُختبَر إحصائيًا."))
-    st.plotly_chart(K.lift_chart(es), width="stretch")
+    st.plotly_chart(K.lift_chart(es), width="stretch", config=PLOT_CFG)
     alt(L("Median event-week lift over baseline: ", "الوسيط لارتفاع أسبوع المناسبة فوق خط الأساس: ")
         + ("؛ " if RTL else "; ").join(f"{I.event_label(r.event)} {r.median_lift:.2f}×" for r in es.sort_values("median_lift", ascending=False).itertuples()) + ".")
     st.dataframe(pd.DataFrame({L("Event", "المناسبة"): es["event"].map(I.event_label), L("Occurrences", "المرات"): es["occurrences"], L("Median lift", "وسيط الارتفاع"): es["median_lift"].round(2),
@@ -475,7 +477,7 @@ elif section == "regions":
     with left:
         if geo_ok:
             show_names = st.checkbox(L("Show region names on the map", "إظهار أسماء المناطق على الخريطة"), value=False, key="reg_names")
-            st.plotly_chart(K.region_map(d, load_map_geojson(str(ROOT)), t, metric_name, labels=show_names, selected=selected, height=520), width="stretch",
+            st.plotly_chart(K.region_map(d, load_map_geojson(str(ROOT)), t, metric_name, labels=show_names, selected=selected, height=520), width="stretch", config=PLOT_CFG,
                             key=f"regmap_{st.session_state['map_nonce']}", on_select=on_map_select, selection_mode=("points",))
             st.markdown(T.map_legend_html(), unsafe_allow_html=True)
             T.caption(L(ATTRIBUTION_TEXT + ". Boundaries are an OpenStreetMap-based depiction for thematic display, not an authoritative survey.",
@@ -485,7 +487,7 @@ elif section == "regions":
                         f"<b>الخريطة غير متاحة:</b> فشل التحقق من ملف الحدود ({geo_detail}). المقارنة المرتّبة غير متأثرة."), "warn")
     with right:
         st.markdown("###### " + L("Ranked comparison (all 13 regions)", "المقارنة المرتّبة (المناطق الـ13)"))
-        st.plotly_chart(K.region_bar(d, metric_name, selected=selected, height=500), width="stretch")
+        st.plotly_chart(K.region_bar(d, metric_name, selected=selected, height=500), width="stretch", config=PLOT_CFG)
         alt(map_text_alternative(d, K.label(t), LANG))
     st.markdown("###### " + L("Selected regions", "المناطق المحددة"))
     vlabel = L("Index", "المؤشر") if per_term else L("Share %", "الحصة %")
@@ -548,7 +550,7 @@ elif section == "mix":
                 "وهو <b>ليس</b> حجم بحث ولا مبيعات ولا إيرادات ولا حجم سوق ولا طلبًا من المستهلكين، ولا يبيّن كم يبحث الناس. "
                 "الحصة الأكبر لمصطلح تعني أنه جزء أكبر من تركيبة المصطلحات الأربعة في تلك المنطقة نفسها، لا أن المنطقة تبحث عنه أكثر من غيرها. "
                 "لهذا التصدير مقياسه الخاص: لا يُدمج أبدًا مع مؤشر الاهتمام الإقليمي ولا مع حصص المصطلحات الخمسة."))
-    st.plotly_chart(K.term_mix_bar(mix, order, height=170 + 38 * len(order)), width="stretch", key="mixbar")
+    st.plotly_chart(K.term_mix_bar(mix, order, height=170 + 38 * len(order)), width="stretch", config=PLOT_CFG, key="mixbar")
     alt(term_mix_text_alternative(mix, order, LANG))
     T.caption(L(f"Bars show the published shares exactly as exported (axis fixed at 0–100%; nothing is rescaled or redistributed). In this export the published shares of each region total "
                 f"{msum['published_sum'].min():.0f}–{msum['published_sum'].max():.0f}%, "
@@ -628,7 +630,7 @@ elif section == "forecast":
     if published:
         fc = get("forecast_national", True)
         dd = full_b[full_b["term"] == TARGET]
-        st.plotly_chart(K.series_chart(dd[dd["week_start"] >= dd["week_start"].max() - pd.Timedelta(weeks=52)], forecast=fc), width="stretch")
+        st.plotly_chart(K.series_chart(dd[dd["week_start"] >= dd["week_start"].max() - pd.Timedelta(weeks=52)], forecast=fc), width="stretch", config=PLOT_CFG)
     with st.expander(L("Backtest detail — mean absolute error by horizon (index points)", "تفاصيل الاختبار الخلفي — متوسط الخطأ المطلق حسب الأفق (نقاط مؤشر)")):
         t_bs = bs[bs["term"] == TARGET].drop(columns=["term", "stem"]).rename(columns={"h": L("Weeks ahead", "أسابيع قادمة"), "naive_last": L("Last week", "آخر أسبوع"),
                                                                                        "seasonal_naive_52": L("Seasonal naive", "ساذج موسمي"), "calendar_ols": L("Calendar model", "النموذج التقويمي")}).round(2)

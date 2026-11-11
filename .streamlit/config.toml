@@ -8,6 +8,8 @@ font = "sans serif"
 
 [client]
 toolbarMode = "viewer"
+# display-only release: no CSV download / clipboard copy from tables
+disableDataExport = true
 
 [browser]
 gatherUsageStats = false
